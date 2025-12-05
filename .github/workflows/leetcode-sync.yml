@@ -1,0 +1,38 @@
+name: Auto Sync LeetCode Solutions
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"  # every 6 hours
+  workflow_dispatch:      # allow manual run
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: |
+        pip install leetcode-api
+
+    - name: Run Sync Script
+      env:
+        LC_USERNAME: ${{ secrets.LEETCODE_USERNAME }}
+        LC_PASSWORD: ${{ secrets.LEETCODE_PASSWORD }}
+      run: |
+        python sync.py
+
+    - name: Commit & Push changes
+      run: |
+        git config --global user.name "GitHub Action"
+        git config --global user.email "actions@github.com"
+        git add .
+        git commit -m "Auto-update LeetCode solutions" || echo "No changes to commit"
+        git push
