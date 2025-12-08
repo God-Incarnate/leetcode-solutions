@@ -3,8 +3,8 @@ import os, pathlib
 from datetime import datetime
 
 # --- Login ---
-username = os.getenv("LC_USERNAME")
-password = os.getenv("LC_PASSWORD")
+username = os.getenv("LEETCODE_USERNAME")
+password = os.getenv("LEETCODE_PASSWORD")
 lc = LeetCode(username, password)
 
 # --- Fetch Accepted Submissions ---
