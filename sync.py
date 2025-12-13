@@ -1,14 +1,8 @@
-from leetcode import LeetCode
-import os, pathlib
+import os
+import pathlib
 from datetime import datetime
-
-# ---------- Login ----------
-username = os.getenv("LEETCODE_USERNAME")
-password = os.getenv("LEETCODE_PASSWORD")
-lc = LeetCode(username, password)
-
-# ---------- Fetch Accepted Submissions ----------
-subs = lc.get_accepted()
+import requests
+import json
 
 # ---------- Config ----------
 DIFFICULTY_FOLDER = {
@@ -16,22 +10,57 @@ DIFFICULTY_FOLDER = {
     "Medium": "JAVA-MEDIUM",
     "Hard": "JAVA-HARD",
 }
-
 TARGET_LANG = "java"
+
+LEETCODE_SESSION = os.getenv("LEETCODE_SESSION")
+CSRFTOKEN = os.getenv("CSRFTOKEN")
+USERNAME = os.getenv("LEETCODE_USERNAME")
+
+if not (LEETCODE_SESSION and CSRFTOKEN and USERNAME):
+    raise Exception("Missing LEETCODE_SESSION, CSRFTOKEN, or LEETCODE_USERNAME in environment variables.")
+
+headers = {
+    "Cookie": f"LEETCODE_SESSION={LEETCODE_SESSION}; csrftoken={CSRFTOKEN}",
+    "x-csrftoken": CSRFTOKEN,
+    "Referer": "https://leetcode.com",
+    "Content-Type": "application/json",
+}
+
+# GraphQL query to get recent accepted submissions
+query = """
+query recentAcSubmissions($username: String!) {
+  recentAcSubmissions(username: $username) {
+    title
+    titleSlug
+    lang
+    code
+    difficulty
+  }
+}
+"""
+
+variables = {"username": USERNAME}
+
+resp = requests.post(
+    "https://leetcode.com/graphql",
+    json={"query": query, "variables": variables},
+    headers=headers
+)
+
+data = resp.json()
+subs = data.get("data", {}).get("recentAcSubmissions", [])
 
 updated = 0
 stats = {"Easy": 0, "Medium": 0, "Hard": 0}
-
-# Keep recent Java submissions
 recent_java = []
 
 # ---------- Process Submissions ----------
 for s in subs:
-    if s["lang"] != TARGET_LANG:
+    if s["lang"].lower() != TARGET_LANG:
         continue
 
     title = s["title"]
-    slug = s["title_slug"]
+    slug = s["titleSlug"]
     code = s["code"]
     difficulty = s.get("difficulty", "Easy")
 
@@ -56,12 +85,10 @@ for s in subs:
         f"```\n"
     )
 
-    # ✅ Write only if file is new or changed
     if not path.exists() or path.read_text(encoding="utf-8") != content:
         path.write_text(content, encoding="utf-8")
         updated += 1
 
-    # ✅ Always count stats
     stats[difficulty] += 1
 
     recent_java.append({
@@ -70,7 +97,7 @@ for s in subs:
         "link": f"https://leetcode.com/problems/{slug}/"
     })
 
-# ---------- README Update ----------
+# ---------- Update README ----------
 readme = pathlib.Path("README.md")
 if readme.exists():
     text = readme.read_text(encoding="utf-8")
@@ -89,28 +116,10 @@ if readme.exists():
     ) or "*No recent Java submissions.*"
 
     def replace_block(txt, start, end, content):
-        return (
-            txt.split(start)[0]
-            + start
-            + "\n\n"
-            + content
-            + "\n\n"
-            + txt.split(end)[1]
-        )
+        return txt.split(start)[0] + start + "\n\n" + content + "\n\n" + txt.split(end)[1]
 
-    text = replace_block(
-        text,
-        "<!-- LEETCODE_STATS:START -->",
-        "<!-- LEETCODE_STATS:END -->",
-        stats_block,
-    )
-
-    text = replace_block(
-        text,
-        "<!-- LEETCODE_RECENT_SUBMISSIONS:START -->",
-        "<!-- LEETCODE_RECENT_SUBMISSIONS:END -->",
-        recent_block,
-    )
+    text = replace_block(text, "<!-- LEETCODE_STATS:START -->", "<!-- LEETCODE_STATS:END -->", stats_block)
+    text = replace_block(text, "<!-- LEETCODE_RECENT_SUBMISSIONS:START -->", "<!-- LEETCODE_RECENT_SUBMISSIONS:END -->", recent_block)
 
     readme.write_text(text, encoding="utf-8")
 
