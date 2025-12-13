@@ -2,7 +2,6 @@ import os
 import pathlib
 from datetime import datetime
 import requests
-import json
 
 # ---------- Config ----------
 DIFFICULTY_FOLDER = {
@@ -71,7 +70,9 @@ for s in subs:
     base = pathlib.Path(folder)
     base.mkdir(exist_ok=True)
 
-    path = base / f"{title}.md"
+    # Make filename slug-safe
+    filename = "".join(c if c.isalnum() or c in "-_" else "_" for c in title)
+    path = base / f"{filename}.md"
 
     content = (
         f"# {title}\n\n"
