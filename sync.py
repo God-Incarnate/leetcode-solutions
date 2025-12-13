@@ -49,22 +49,26 @@ resp = requests.post(
 data = resp.json()
 subs = data.get("data", {}).get("recentAcSubmissions", [])
 
+print(f"Fetched {len(subs)} submissions from LeetCode.")
+
 updated = 0
 stats = {"Easy": 0, "Medium": 0, "Hard": 0}
 recent_java = []
 
 # ---------- Process Submissions ----------
 for s in subs:
-    if s["lang"].lower() != TARGET_LANG:
+    lang = s["lang"].lower()
+    if lang != TARGET_LANG:
         continue
 
     title = s["title"]
     slug = s["titleSlug"]
     code = s["code"]
-    difficulty = s.get("difficulty", "Easy")
+    difficulty = s.get("difficulty", "Easy").capitalize()  # Normalize difficulty
 
     folder = DIFFICULTY_FOLDER.get(difficulty)
     if not folder:
+        print(f"Skipping {title}, unknown difficulty: {difficulty}")
         continue
 
     base = pathlib.Path(folder)
@@ -73,6 +77,8 @@ for s in subs:
     # Make filename slug-safe
     filename = "".join(c if c.isalnum() or c in "-_" else "_" for c in title)
     path = base / f"{filename}.md"
+
+    print(f"Processing: {title} ({difficulty}) -> {path}")
 
     content = (
         f"# {title}\n\n"
