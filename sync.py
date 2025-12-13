@@ -2,12 +2,15 @@ from leetcode_api import LeetCode
 import os, pathlib
 from datetime import datetime
 
+# ---------- Login ----------
 username = os.getenv("LEETCODE_USERNAME")
 password = os.getenv("LEETCODE_PASSWORD")
 lc = LeetCode(username, password)
 
+# ---------- Fetch Accepted Submissions ----------
 subs = lc.get_accepted()
 
+# ---------- Config ----------
 DIFFICULTY_FOLDER = {
     "Easy": "JAVA-EASY",
     "Medium": "JAVA-MEDIUM",
@@ -19,6 +22,10 @@ TARGET_LANG = "java"
 updated = 0
 stats = {"Easy": 0, "Medium": 0, "Hard": 0}
 
+# Keep recent Java submissions (latest first)
+recent_java = []
+
+# ---------- Process Submissions ----------
 for s in subs:
     if s["lang"] != TARGET_LANG:
         continue
