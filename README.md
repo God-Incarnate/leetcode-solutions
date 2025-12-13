@@ -10,9 +10,13 @@
 
 <!-- LEETCODE_STATS:START -->
 
-*Stats will appear here after the first sync.*
+- **Java Problems Solved:** 0
+- **Easy:** 0
+- **Medium:** 0
+- **Hard:** 0
+- **Last Updated (UTC):** 2025-12-13 17:14:38
 
-<!-- LEETCODE_STATS:END -->
+
 
 ---
 
@@ -20,9 +24,9 @@
 
 <!-- LEETCODE_RECENT_SUBMISSIONS:START -->
 
-*Recent submissions will appear here after the first sync.*
+*No recent Java submissions.*
 
-<!-- LEETCODE_RECENT_SUBMISSIONS:END -->
+
 
 ---
 
