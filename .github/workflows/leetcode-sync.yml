@@ -22,13 +22,14 @@ jobs:
       run: python -m pip install --upgrade pip
 
     - name: Install dependencies
-      run: |
-        python -m pip install leetcode-api
+      run: python -m pip install --upgrade pip requests
 
     - name: Run Sync Script
       env:
         LEETCODE_USERNAME: ${{ secrets.LEETCODE_USERNAME }}
         LEETCODE_PASSWORD: ${{ secrets.LEETCODE_PASSWORD }}
+        LEETCODE_SESSION: ${{ secrets.LEETCODE_SESSION }}
+        CSRFTOKEN: ${{ secrets.CSRFTOKEN }}
       run: python sync.py
 
     - name: Commit & Push
