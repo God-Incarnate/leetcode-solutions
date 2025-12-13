@@ -2,59 +2,56 @@ from leetcode_api import LeetCode
 import os, pathlib
 from datetime import datetime
 
-# --- Login ---
+# ---------- Login ----------
 username = os.getenv("LEETCODE_USERNAME")
 password = os.getenv("LEETCODE_PASSWORD")
 lc = LeetCode(username, password)
 
-# --- Fetch Accepted Submissions ---
-submissions = lc.get_accepted()
+# ---------- Fetch Accepted Submissions ----------
+subs = lc.get_accepted()
 
-# --- Prepare Solutions Folder ---
-base = pathlib.Path("solutions")
-base.mkdir(exist_ok=True)
+# ---------- Folder Mapping ----------
+DIFFICULTY_FOLDER = {
+    "Easy": "JAVA-EASY",
+    "Medium": "JAVA-MEDIUM",
+    "Hard": "JAVA-HARD",
+}
 
-# --- Write Solutions ---
-for sub in submissions:
-    title = sub["title_slug"]
-    code = sub["code"]
-    lang = sub["lang"]
+LANGUAGE_TARGET = "java"
+LANG_CODE_BLOCK = "java"
 
-    ext = {
-        "python3": ".py",
-        "java": ".java",
-        "cpp": ".cpp",
-        "javascript": ".js",
-        "sql": ".sql",
-    }.get(lang, ".txt")
+updated = 0
+java_count = {"Easy": 0, "Medium": 0, "Hard": 0}
 
-    path = base / f"{title}{ext}"
+for s in subs:
+    lang = s["lang"]
+    if lang != LANGUAGE_TARGET:
+        continue   # skip non-Java submissions
 
-    with open(path, "w", encoding="utf-8") as f:
-        f.write(code)
+    title = s["title"]
+    slug = s["title_slug"]
+    code = s["code"]
+    difficulty = s.get("difficulty", "Easy")
 
-# --- Prepare Stats for README ---
-total_solved = len(submissions)
-recent = submissions[-5:]  # last 5 submissions
-recent_list = "\n".join([f"- {s['title_slug']} ({s['lang']})" for s in reversed(recent)])
+    folder_name = DIFFICULTY_FOLDER.get(difficulty)
+    if not folder_name:
+        continue
 
-stats_content = f"- **Total Problems Solved:** {total_solved}\n"
-stats_content += f"- **Last Updated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+    folder = pathlib.Path(folder_name)
+    folder.mkdir(exist_ok=True)
 
-# --- Update README Placeholders ---
-readme_path = pathlib.Path("README.md")
-if readme_path.exists():
-    readme_text = readme_path.read_text(encoding="utf-8")
+    filename = f"{title}.md"
+    path = folder / filename
 
-    # Update LEETCODE_STATS
-    start_tag = "<!-- LEETCODE_STATS:START -->"
-    end_tag = "<!-- LEETCODE_STATS:END -->"
-    readme_text = readme_text.split(start_tag)[0] + start_tag + "\n" + stats_content + "\n" + readme_text.split(end_tag)[1]
+    content = f"""# {title}
 
-    # Update LEETCODE_RECENT_SUBMISSIONS
-    start_tag2 = "<!-- LEETCODE_RECENT_SUBMISSIONS:START -->"
-    end_tag2 = "<!-- LEETCODE_RECENT_SUBMISSIONS:END -->"
-    readme_text = readme_text.split(start_tag2)[0] + start_tag2 + "\n" + recent_list + "\n" + readme_text.split(end_tag2)[1]
+**Difficulty:** {difficulty}  
+**Language:** Java  
+**Link:** https://leetcode.com/problems/{slug}/
 
-    # Write back updated README
-    readme_path.write_text(readme_text, encoding="utf-8")
+---
+
+## 🧠 Solution (Java)
+
+```{LANG_CODE_BLOCK}
+{code}
