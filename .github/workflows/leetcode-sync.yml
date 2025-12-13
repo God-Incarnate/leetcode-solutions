@@ -2,40 +2,36 @@ name: Auto Sync LeetCode Solutions
 
 on:
   schedule:
-    - cron: "0 6 * * *" # 12:30 PM IST (UTC)
-  workflow_dispatch:
+    - cron: "0 6 * * *"  # 12:30 PM IST
+  workflow_dispatch:      # manual run allowed
 
 jobs:
   sync:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Setup Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
 
-    - name: Upgrade pip
-      run: python -m pip install --upgrade pip
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip requests
 
-    - name: Install dependencies
-      run: python -m pip install --upgrade pip requests
+      - name: Run Sync Script
+        env:
+          LEETCODE_SESSION: ${{ secrets.LEETCODE_SESSION }}
+          CSRFTOKEN: ${{ secrets.CSRFTOKEN }}
+          LEETCODE_USERNAME: ${{ secrets.LEETCODE_USERNAME }}
+        run: python sync.py
 
-    - name: Run Sync Script
-      env:
-        LEETCODE_USERNAME: ${{ secrets.LEETCODE_USERNAME }}
-        LEETCODE_PASSWORD: ${{ secrets.LEETCODE_PASSWORD }}
-        LEETCODE_SESSION: ${{ secrets.LEETCODE_SESSION }}
-        CSRFTOKEN: ${{ secrets.CSRFTOKEN }}
-      run: python sync.py
-
-    - name: Commit & Push
-      run: |
-        git config user.name "github-actions[bot]"
-        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-        git add JAVA-EASY JAVA-MEDIUM JAVA-HARD README.md
-        git commit -m "leetcode(java): sync solved problems" || echo "No changes"
-        git push
+      - name: Commit & Push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add JAVA-EASY JAVA-MEDIUM JAVA-HARD README.md
+          git commit -m "leetcode(java): sync solved problems" || echo "No changes"
+          git push
