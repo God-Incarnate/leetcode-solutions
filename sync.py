@@ -2,46 +2,40 @@ from leetcode_api import LeetCode
 import os, pathlib
 from datetime import datetime
 
-# ---------- Login ----------
 username = os.getenv("LEETCODE_USERNAME")
 password = os.getenv("LEETCODE_PASSWORD")
 lc = LeetCode(username, password)
 
-# ---------- Fetch Accepted Submissions ----------
 subs = lc.get_accepted()
 
-# ---------- Folder Mapping ----------
 DIFFICULTY_FOLDER = {
     "Easy": "JAVA-EASY",
     "Medium": "JAVA-MEDIUM",
     "Hard": "JAVA-HARD",
 }
 
-LANGUAGE_TARGET = "java"
-LANG_CODE_BLOCK = "java"
+TARGET_LANG = "java"
 
 updated = 0
-java_count = {"Easy": 0, "Medium": 0, "Hard": 0}
+stats = {"Easy": 0, "Medium": 0, "Hard": 0}
 
 for s in subs:
-    lang = s["lang"]
-    if lang != LANGUAGE_TARGET:
-        continue   # skip non-Java submissions
+    if s["lang"] != TARGET_LANG:
+        continue
 
     title = s["title"]
     slug = s["title_slug"]
     code = s["code"]
     difficulty = s.get("difficulty", "Easy")
 
-    folder_name = DIFFICULTY_FOLDER.get(difficulty)
-    if not folder_name:
+    folder = DIFFICULTY_FOLDER.get(difficulty)
+    if not folder:
         continue
 
-    folder = pathlib.Path(folder_name)
-    folder.mkdir(exist_ok=True)
+    base = pathlib.Path(folder)
+    base.mkdir(exist_ok=True)
 
-    filename = f"{title}.md"
-    path = folder / filename
+    path = base / f"{title}.md"
 
     content = f"""# {title}
 
@@ -53,5 +47,5 @@ for s in subs:
 
 ## 🧠 Solution (Java)
 
-```{LANG_CODE_BLOCK}
+```java
 {code}
