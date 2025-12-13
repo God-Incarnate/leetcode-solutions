@@ -2,8 +2,8 @@ name: Auto Sync LeetCode Solutions
 
 on:
   schedule:
-    - cron: "0 12 * * *" # every day at 6:30 AM IST
-  workflow_dispatch:      # allow manual run
+    - cron: "0 6 * * *" # 12:30 PM IST (UTC)
+  workflow_dispatch:
 
 jobs:
   sync:
@@ -18,15 +18,18 @@ jobs:
       with:
         python-version: '3.11'
 
-    - name: Install dependency
-      run: pip install leetcode-api
+    - name: Upgrade pip
+      run: python -m pip install --upgrade pip
+
+    - name: Install dependencies
+      run: |
+        python -m pip install leetcode-api
 
     - name: Run Sync Script
       env:
         LEETCODE_USERNAME: ${{ secrets.LEETCODE_USERNAME }}
         LEETCODE_PASSWORD: ${{ secrets.LEETCODE_PASSWORD }}
-      run: |
-        python sync.py
+      run: python sync.py
 
     - name: Commit & Push
       run: |
