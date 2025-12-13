@@ -1,4 +1,4 @@
-from leetcode-api import LeetCode
+from leetcode_api import LeetCode
 import os, pathlib
 from datetime import datetime
 
