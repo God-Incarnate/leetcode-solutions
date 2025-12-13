@@ -2,7 +2,7 @@ name: Auto Sync LeetCode Solutions
 
 on:
   schedule:
-    - cron: "0 */6 * * *"  # every 6 hours
+    - cron: "0 12 * * *" # every day at 6:30 AM IST
   workflow_dispatch:      # allow manual run
 
 jobs:
@@ -24,8 +24,8 @@ jobs:
 
     - name: Run Sync Script
       env:
-        LC_USERNAME: ${{ secrets.LEETCODE_USERNAME }}
-        LC_PASSWORD: ${{ secrets.LEETCODE_PASSWORD }}
+        LEETCODE_USERNAME: ${{ secrets.LEETCODE_USERNAME }}
+        LEETCODE_PASSWORD: ${{ secrets.LEETCODE_PASSWORD }}
       run: |
         python sync.py
 
