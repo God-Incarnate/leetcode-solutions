@@ -10,17 +10,23 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Step 1: Checkout repo with PAT
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GH_PAT }}  # Use PAT here for push permissions
 
+      # Step 2: Setup Python
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
+      # Step 3: Install dependencies
       - name: Install dependencies
         run: python -m pip install --upgrade pip requests
 
+      # Step 4: Run LeetCode sync script
       - name: Run Sync Script
         env:
           LEETCODE_SESSION: ${{ secrets.LEETCODE_SESSION }}
@@ -28,15 +34,11 @@ jobs:
           LEETCODE_USERNAME: ${{ secrets.LEETCODE_USERNAME }}
         run: python sync.py
 
+      # Step 5: Commit & Push
       - name: Commit & Push
-        env:
-          GH_PAT: ${{ secrets.GH_PAT }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add JAVA-EASY JAVA-MEDIUM JAVA-HARD README.md
           git commit -m "leetcode(java): sync solved problems" || echo "No changes"
-          # Override origin URL with PAT authentication
-          git remote set-url origin "https://x-access-token:${GH_PAT}@github.com/${{ github.repository }}.git"
           git push origin HEAD:main
-
