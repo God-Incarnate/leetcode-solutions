@@ -25,46 +25,55 @@ headers = {
     "Content-Type": "application/json",
 }
 
-# GraphQL query to get recent accepted submissions
-query = """
-query recentAcSubmissions($username: String!) {
-  recentAcSubmissions(username: $username) {
-    title
-    titleSlug
-    lang
-    code
-    difficulty
-  }
-}
-"""
+# ---------- Fetch all accepted submissions ----------
+all_subs = []
+skip = 0
+limit = 50  # Number of submissions per request
 
-variables = {"username": USERNAME}
+while True:
+    query = """
+    query userStatus($username: String!, $skip: Int!, $first: Int!) {
+      submissionList(username: $username, limit: $first, offset: $skip) {
+        title
+        titleSlug
+        lang
+        code
+        status
+        difficulty
+      }
+    }
+    """
+    variables = {"username": USERNAME, "skip": skip, "first": limit}
+    resp = requests.post(
+        "https://leetcode.com/graphql",
+        json={"query": query, "variables": variables},
+        headers=headers
+    )
+    data = resp.json()
+    subs = data.get("data", {}).get("submissionList", [])
+    if not subs:
+        break
+    # Keep only accepted submissions
+    accepted = [s for s in subs if s.get("status") == "Accepted"]
+    all_subs.extend(accepted)
+    skip += limit
 
-resp = requests.post(
-    "https://leetcode.com/graphql",
-    json={"query": query, "variables": variables},
-    headers=headers
-)
-
-data = resp.json()
-subs = data.get("data", {}).get("recentAcSubmissions", [])
-
-print(f"Fetched {len(subs)} submissions from LeetCode.")
+print(f"Fetched {len(all_subs)} accepted submissions from LeetCode.")
 
 updated = 0
 stats = {"Easy": 0, "Medium": 0, "Hard": 0}
 recent_java = []
 
 # ---------- Process Submissions ----------
-for s in subs:
+for s in all_subs:
     lang = s["lang"].lower()
     if lang != TARGET_LANG:
         continue
 
     title = s["title"]
     slug = s["titleSlug"]
-    code = s["code"]
-    difficulty = s.get("difficulty", "Easy").capitalize()  # Normalize difficulty
+    code = s.get("code", "")
+    difficulty = s.get("difficulty", "Easy").capitalize()
 
     folder = DIFFICULTY_FOLDER.get(difficulty)
     if not folder:
@@ -74,11 +83,9 @@ for s in subs:
     base = pathlib.Path(folder)
     base.mkdir(exist_ok=True)
 
-    # Make filename slug-safe
+    # Slug-safe filename
     filename = "".join(c if c.isalnum() or c in "-_" else "_" for c in title)
     path = base / f"{filename}.md"
-
-    print(f"Processing: {title} ({difficulty}) -> {path}")
 
     content = (
         f"# {title}\n\n"
@@ -123,7 +130,11 @@ if readme.exists():
     ) or "*No recent Java submissions.*"
 
     def replace_block(txt, start, end, content):
-        return txt.split(start)[0] + start + "\n\n" + content + "\n\n" + txt.split(end)[1]
+        if start in txt and end in txt:
+            return txt.split(start)[0] + start + "\n\n" + content + "\n\n" + txt.split(end)[1]
+        else:
+            print(f"Warning: Tags {start} or {end} not found in README")
+            return txt
 
     text = replace_block(text, "<!-- LEETCODE_STATS:START -->", "<!-- LEETCODE_STATS:END -->", stats_block)
     text = replace_block(text, "<!-- LEETCODE_RECENT_SUBMISSIONS:START -->", "<!-- LEETCODE_RECENT_SUBMISSIONS:END -->", recent_block)
